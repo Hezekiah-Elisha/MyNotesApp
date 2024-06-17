@@ -23,7 +23,11 @@ fun NoteNavigation(modifier: Modifier = Modifier) {
             HomeScreen(navController = navController, viewModel = viewModel)
         }
         composable("createNote") {
-             CreateNoteScreen()
+            val viewModel = hiltViewModel<HomeViewModel>()
+            CreateNoteScreen(
+                navController = navController,
+                viewModel = viewModel
+             )
         }
     }
 }

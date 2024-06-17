@@ -1,5 +1,8 @@
 package com.hub.notesapp.screens.note
 
+import android.util.Log
+import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +13,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,17 +31,49 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import com.hub.notesapp.model.Note
+import com.hub.notesapp.screens.home.HomeViewModel
 import com.hub.notesapp.ui.theme.NotesAppTheme
+
+private const val TAG = "CreateNoteScreen"
+
+@Composable
+fun CreateNoteScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    viewModel: HomeViewModel = hiltViewModel()
+) {
+    CreateNoteScreenContent(modifier = modifier){title, content ->
+        Log.d(TAG, "CreateNoteScreen: $title, $content")
+        val note = Note(
+            title = title,
+            content = content,
+            timestamp = System.currentTimeMillis(),
+        )
+        viewModel.addNote(note)
+        navController.popBackStack()
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateNoteScreen(
-    modifier: Modifier = Modifier
+fun CreateNoteScreenContent(
+    modifier: Modifier = Modifier,
+    onDone: (String, String) -> Unit = { title, content -> }
 ) {
     val title = remember { mutableStateOf("") }
     val content = remember { mutableStateOf("") }
 
-    Column {
+    val enabled = title.value.trim().isNotBlank() && content.value.trim().isNotBlank()
+    val error = remember { mutableStateOf("") }
+
+    Column (
+        modifier = modifier
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Top
+    ){
         TopAppBar(
             title = {
                 Text(
@@ -67,14 +103,31 @@ fun CreateNoteScreen(
                     labelName = "Content",
                     isSingleLine = false
                 )
+                if (error.value.isNotEmpty()) {
+                    Text(
+                        text = error.value,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = modifier.fillMaxWidth()
+                    )
+
+                }
             }
             Column(
                 modifier = modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Bottom
             ) {
                 Button(
-                    onClick = { /*\TODO*/ },
-                    Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        if (title.value.isEmpty() || content.value.isEmpty()){
+                            error.value = "Please fill in all fields***"
+                            return@Button
+                        } else {
+                            onDone(title.value, content.value)
+                        }
+                    },
+                    enabled = enabled,
+
                 ) {
                     Text(text = "Save")
                 }
@@ -110,6 +163,6 @@ fun InputField(
 @Composable
 fun PreviewAmazingInputField() {
     NotesAppTheme {
-        CreateNoteScreen()
+        CreateNoteScreenContent()
     }
 }

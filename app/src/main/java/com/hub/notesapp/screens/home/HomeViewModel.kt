@@ -19,6 +19,7 @@ class HomeViewModel @Inject constructor(
 //    use flow
     val allNotes: Flow<List<Note>> = repository.getAllNotes()
 
+
     fun deleteAll() = viewModelScope.launch {
         repository.deleteAll()
     }

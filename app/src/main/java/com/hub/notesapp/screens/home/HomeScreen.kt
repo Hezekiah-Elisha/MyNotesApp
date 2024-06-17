@@ -77,9 +77,9 @@ fun HomeScreen(
 @Composable
 fun NotesList(
     modifier: Modifier = Modifier,
-    notes: List<Note>
+    notes: List<Note>?
 ) {
-    if (notes.isEmpty()){
+    if (notes!= null){
         LazyColumn(
             modifier = modifier.fillMaxSize()
         ) {
