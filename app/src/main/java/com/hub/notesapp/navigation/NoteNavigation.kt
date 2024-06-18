@@ -9,6 +9,7 @@ import androidx.navigation.compose.rememberNavController
 import com.hub.notesapp.screens.home.HomeScreen
 import com.hub.notesapp.screens.home.HomeViewModel
 import com.hub.notesapp.screens.note.CreateNoteScreen
+import com.hub.notesapp.screens.note.ViewNote
 
 @Composable
 fun NoteNavigation(modifier: Modifier = Modifier) {
@@ -28,6 +29,13 @@ fun NoteNavigation(modifier: Modifier = Modifier) {
                 navController = navController,
                 viewModel = viewModel
              )
+        }
+        composable("viewNote") {
+            val viewModel = hiltViewModel<HomeViewModel>()
+            ViewNote(
+                navController = navController,
+                viewModel = viewModel
+            )
         }
     }
 }

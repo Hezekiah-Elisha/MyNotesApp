@@ -53,6 +53,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.ui.text.google.fonts)
     val nav_version = "2.7.7"
     val roomVersion = "2.6.1"
 

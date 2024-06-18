@@ -35,4 +35,6 @@ class HomeViewModel @Inject constructor(
     fun update(note: Note) = viewModelScope.launch {
         repository.update(note)
     }
+
+    fun getAllCategories(): Flow<List<String>> = repository.categories()
 }

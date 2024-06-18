@@ -1,18 +1,25 @@
 package com.hub.notesapp.screens.home
 
+import android.widget.HorizontalScrollView
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -20,10 +27,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -34,6 +41,7 @@ import com.hub.notesapp.ui.theme.NotesAppTheme
 import com.hub.notesapp.utils.Constants
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale.Category
 
 @Composable
 fun HomeScreen(
@@ -43,33 +51,54 @@ fun HomeScreen(
 ) {
 
     val allNotes = viewModel.allNotes.collectAsState(initial = emptyList()).value
+    val categories = viewModel.getAllCategories().collectAsState(initial = emptyList()).value
 
     Scaffold(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = { TopBar() },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = {
-                    navController.navigate("CreateNote")
-                }) {
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_edit_square_24),
-                    contentDescription = "Add Note",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = "Add Note",
-                    modifier = modifier.padding(start = 8.dp),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+            FloatingButton(navController, modifier)
         },
         
     ) {innerPadding->
-        NotesList(
+        Column(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            notes = allNotes
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            CategoriesSection(
+                modifier = modifier,
+                categories = categories
+            )
+            NotesList(
+                modifier = modifier
+                    .fillMaxSize(),
+                notes = allNotes
+            )
+        }
+    }
+}
+
+@Composable
+private fun FloatingButton(
+    navController: NavController,
+    modifier: Modifier
+) {
+    ExtendedFloatingActionButton(
+        onClick = {
+            navController.navigate("CreateNote")
+        }) {
+        Icon(
+            painter = painterResource(id = R.drawable.baseline_edit_square_24),
+            contentDescription = stringResource(R.string.add_note),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = "Add Note",
+            modifier = modifier.padding(start = 8.dp),
+            color = MaterialTheme.colorScheme.primary
         )
     }
 }
@@ -97,7 +126,9 @@ fun NotesList(
                 text = "No notes available",
                 fontSize = 20.sp,
                 textAlign = TextAlign.Center,
-                modifier = modifier.padding(16.dp).fillMaxWidth()
+                modifier = modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
             )
         }
     }
@@ -112,17 +143,29 @@ fun NotesCard(modifier: Modifier = Modifier, note: Note) {
             .fillMaxWidth()
             .padding(8.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         )
     ) {
         Text(
-            text = note.title,
-            modifier = modifier.padding(start=16.dp, end=16.dp),
-            style = MaterialTheme.typography.headlineMedium
+            text = note.title.uppercase(),
+            modifier = modifier.padding(start=16.dp, end=16.dp, top = 8.dp),
+            style = MaterialTheme.typography.headlineMedium,
+            fontStyle = MaterialTheme.typography.headlineMedium.fontStyle
+        )
+        Divider(
+            modifier = modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            color = MaterialTheme.colorScheme.onPrimary,
+            thickness = 1.dp
         )
         Text(
-            text = note.content,
+            text = if (note.content.length > Constants.CONTENT_PREVIEW_LENGTH) {
+                "${note.content.take(Constants.CONTENT_PREVIEW_LENGTH)}..."
+            } else {
+                note.content
+            },
             modifier = modifier.padding(start=16.dp, end=16.dp),
             style = MaterialTheme.typography.bodyMedium
         )
@@ -131,12 +174,36 @@ fun NotesCard(modifier: Modifier = Modifier, note: Note) {
             modifier = modifier.padding(16.dp),
             style = MaterialTheme.typography.bodySmall
         )
+        Chip(
+            label=note.category,
+            modifier = modifier.padding(16.dp)
+        )
     }
 }
 fun getTimestampToDateTime(timestamp: Long): String {
     val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
     val netDate = Date(timestamp)
     return sdf.format(netDate)
+}
+
+@Composable
+fun Chip(modifier: Modifier = Modifier, label: String? = "Regular", shape: Shape = SuggestionChipDefaults.shape) {
+    SuggestionChip(
+        shape = shape,
+        modifier = modifier,
+        colors = SuggestionChipDefaults.suggestionChipColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            labelColor = MaterialTheme.colorScheme.onSurface
+        ),
+        border = null,
+        onClick = { /*TODO*/ },
+        label = {
+            Text(
+                text = label.toString(),
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -160,10 +227,21 @@ fun TopBar(modifier: Modifier = Modifier) {
     )
 }
 
-//@Preview(showBackground = true)
-//@Composable
-//private fun HomeScreenPreview() {
-//    NotesAppTheme {
-//        HomeScreen()
-//    }
-//}
+@Composable
+fun CategoriesSection(modifier: Modifier = Modifier, categories: List<String>) {
+    LazyRow(
+        modifier = modifier.fillMaxWidth()
+            .background(
+                color = MaterialTheme.colorScheme.primary
+            ),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        items(categories.size) { index ->
+            Chip(
+                shape = RoundedCornerShape(8.dp),
+                modifier = modifier.padding(8.dp),
+                label = categories[index]
+            )
+        }
+    }
+}

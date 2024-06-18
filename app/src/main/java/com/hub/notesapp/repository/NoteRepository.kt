@@ -13,4 +13,5 @@ class NoteRepository @Inject constructor(
     suspend fun update(note: Note) = noteDao.update(note)
     suspend fun delete(note: Note) = noteDao.delete(note)
     fun getAllNotes(): Flow<List<Note>> = noteDao.getAllNotes()
+    fun categories(): Flow<List<String>> = noteDao.getAllCategories()
 }

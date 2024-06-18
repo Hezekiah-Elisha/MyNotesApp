@@ -45,11 +45,12 @@ fun CreateNoteScreen(
     navController: NavController,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    CreateNoteScreenContent(modifier = modifier){title, content ->
-        Log.d(TAG, "CreateNoteScreen: $title, $content")
+    CreateNoteScreenContent(modifier = modifier){title, content, category ->
+        Log.d(TAG, "CreateNoteScreen: title=$title, content=$content, category=$category")
         val note = Note(
             title = title,
             content = content,
+            category = category,
             timestamp = System.currentTimeMillis(),
         )
         viewModel.addNote(note)
@@ -61,10 +62,11 @@ fun CreateNoteScreen(
 @Composable
 fun CreateNoteScreenContent(
     modifier: Modifier = Modifier,
-    onDone: (String, String) -> Unit = { title, content -> }
+    onDone: (String, String, String) -> Unit = { title, content, category -> }
 ) {
     val title = remember { mutableStateOf("") }
     val content = remember { mutableStateOf("") }
+    val category = remember { mutableStateOf("") }
 
     val enabled = title.value.trim().isNotBlank() && content.value.trim().isNotBlank()
     val error = remember { mutableStateOf("") }
@@ -99,10 +101,15 @@ fun CreateNoteScreenContent(
                     labelName = "Title"
                 )
                 InputField(
+                    valueState = category,
+                    labelName = "Category"
+                )
+                InputField(
                     valueState = content,
                     labelName = "Content",
                     isSingleLine = false
                 )
+
                 if (error.value.isNotEmpty()) {
                     Text(
                         text = error.value,
@@ -123,7 +130,7 @@ fun CreateNoteScreenContent(
                             error.value = "Please fill in all fields***"
                             return@Button
                         } else {
-                            onDone(title.value, content.value)
+                            onDone(title.value, content.value, category.value)
                         }
                     },
                     enabled = enabled,

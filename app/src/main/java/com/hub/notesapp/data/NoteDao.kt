@@ -31,4 +31,7 @@ interface NoteDao{
 
     @Delete
     suspend fun delete(note: Note)
+
+    @Query("SELECT category FROM notes GROUP BY category")
+    fun getAllCategories(): Flow<List<String>>
 }
