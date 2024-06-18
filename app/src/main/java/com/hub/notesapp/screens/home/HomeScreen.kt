@@ -25,6 +25,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
@@ -50,33 +51,44 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
 
-    val allNotes = viewModel.allNotes.collectAsState(initial = emptyList()).value
+//    val allNotes = viewModel.allNotes.collectAsState(initial = emptyList()).value
+    val notesState by viewModel.notesState.collectAsState()
     val categories = viewModel.getAllCategories().collectAsState(initial = emptyList()).value
 
-    Scaffold(
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surface,
-        topBar = { TopBar() },
-        floatingActionButton = {
-            FloatingButton(navController, modifier)
-        },
-        
-    ) {innerPadding->
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            CategoriesSection(
+    when (notesState) {
+        is NotesState.Error ->{
+            Text(text = "Error")
+        }
+        is NotesState.Loading -> {
+            Text(text = "Loading")
+        }
+        is NotesState.Success -> {
+            Scaffold(
                 modifier = modifier,
-                categories = categories
-            )
-            NotesList(
-                modifier = modifier
-                    .fillMaxSize(),
-                notes = allNotes
-            )
+                containerColor = MaterialTheme.colorScheme.surface,
+                topBar = { TopBar() },
+                floatingActionButton = {
+                    FloatingButton(navController, modifier)
+                },
+            ) {innerPadding->
+                Column(
+                    modifier = modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    CategoriesSection(
+                        modifier = modifier,
+                        categories = categories
+                    )
+                    NotesList(
+                        modifier = modifier
+                            .fillMaxSize(),
+                        notes = (notesState as NotesState.Success).notes,
+                        navController = navController
+                    )
+                }
+            }
         }
     }
 }
@@ -106,14 +118,15 @@ private fun FloatingButton(
 @Composable
 fun NotesList(
     modifier: Modifier = Modifier,
-    notes: List<Note>?
+    notes: List<Note>?,
+    navController: NavController
 ) {
     if (notes!= null){
         LazyColumn(
             modifier = modifier.fillMaxSize()
         ) {
             items(notes.size) { index ->
-                NotesCard(note = notes[index])
+                NotesCard(note = notes[index], navController = navController)
             }
         }
     } else {
@@ -136,9 +149,11 @@ fun NotesList(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NotesCard(modifier: Modifier = Modifier, note: Note) {
+fun NotesCard(modifier: Modifier = Modifier, note: Note, navController: NavController) {
     Card(
-        onClick = { /*TODO*/ },
+        onClick = {
+            navController.navigate("viewNote/noteId=${note.id}")
+        },
         modifier = modifier
             .fillMaxWidth()
             .padding(8.dp),
@@ -230,7 +245,8 @@ fun TopBar(modifier: Modifier = Modifier) {
 @Composable
 fun CategoriesSection(modifier: Modifier = Modifier, categories: List<String>) {
     LazyRow(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
             .background(
                 color = MaterialTheme.colorScheme.primary
             ),

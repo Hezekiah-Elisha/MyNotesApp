@@ -1,13 +1,15 @@
 package com.hub.notesapp.screens.home
 
-import androidx.lifecycle.LiveData
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import com.hub.notesapp.model.Note
 import com.hub.notesapp.repository.NoteRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,6 +21,18 @@ class HomeViewModel @Inject constructor(
 //    use flow
     val allNotes: Flow<List<Note>> = repository.getAllNotes()
 
+    private val _notesState = MutableStateFlow<NotesState>(NotesState.Loading)
+    val notesState: StateFlow<NotesState> = _notesState
+
+    init {
+        getAllNotes()
+    }
+
+    private fun getAllNotes() = viewModelScope.launch {
+        repository.getAllNotes().collect { notes ->
+            _notesState.value = NotesState.Success(notes)
+        }
+    }
 
     fun deleteAll() = viewModelScope.launch {
         repository.deleteAll()
@@ -35,6 +49,7 @@ class HomeViewModel @Inject constructor(
     fun update(note: Note) = viewModelScope.launch {
         repository.update(note)
     }
+
 
     fun getAllCategories(): Flow<List<String>> = repository.categories()
 }

@@ -34,4 +34,5 @@ interface NoteDao{
 
     @Query("SELECT category FROM notes GROUP BY category")
     fun getAllCategories(): Flow<List<String>>
+
 }
